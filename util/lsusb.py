@@ -18,9 +18,9 @@ while bus:
 	dev = bus.devices
 	while dev:
 		d = dev.descriptor
-		print "Bus %s" % dev.bus.dirname,
-		print "Device %s:" % dev.filename,
-		print "ID %04x:%04x" % (d.idVendor, d.idProduct),
+		print("Bus %s" % dev.bus.dirname,)
+		print("Device %s:" % dev.filename,)
+		print("ID %04x:%04x" % (d.idVendor, d.idProduct),)
 		h = usb_open(dev)
 		str = []
 		for i in [d.iManufacturer, d.iProduct, d.iSerialNumber]:
@@ -28,8 +28,8 @@ while bus:
 			if s:
 				str.append(s)
 		if str:
-			print "[%s]" % ', '.join(str),
+			print("[%s]" % ', '.join(str),)
 		usb_close(h)
-		print
+		print()
 		dev = dev.next
 	bus = bus.next
