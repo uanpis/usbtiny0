@@ -258,6 +258,12 @@ extern void usb_out (byte_t* data, byte_t len) {
 // Main
 // ----------------------------------------------------------------------
 extern int main (void) {
+	// clock setup
+	CCP = CCP_IOREG_gc;
+	CLKCTRL.MCLKCTRLA = CLKCTRL_CLKSEL_EXTCLK_gc;
+	CCP = CCP_IOREG_gc;
+	CLKCTRL.MCLKCTRLB = 0x00;
+
 	SET(BUFFEN);
 	OUTPUT(BUFFEN);
 	usb_init();
