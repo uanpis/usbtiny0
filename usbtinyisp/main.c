@@ -15,8 +15,7 @@
 #include "def.h"
 #include "usb.h"
 
-enum
-{
+enum {
 	// Generic requests
 	USBTINY_ECHO,		// echo test
 	USBTINY_READ,		// read byte
@@ -39,15 +38,15 @@ enum
 // ----------------------------------------------------------------------
 // I/O pins:
 // ----------------------------------------------------------------------
-#define	PORT		PORTA.OUT
-#define	DDR		PORTA.DIR
-#define	PIN		PORTA.OUT
+#define	PORT		PORTA
+#define	DDR			PORTA.DIR
+#define	PIN			PORTA.OUT
 
-#define	LED		PIN1_bp		// output
+#define	LED			PIN1_bp		// output
 #define	RESET		PIN2_bp		// output
 #define	MOSI		PIN5_bp		// output
 #define	MISO		PIN6_bp		// input
-#define	SCK		PIN7_bp		// output
+#define	SCK			PIN7_bp		// output
 
 #define	LED_MASK	_BV(LED)
 #define	RESET_MASK	_BV(RESET)
@@ -73,8 +72,7 @@ static	byte_t		res[4];		// SPI result buffer
 // Delay exactly <sck_period> times 0.5 microseconds (6 cycles).
 // ----------------------------------------------------------------------
 __attribute__((always_inline))
-static	inline	void	delay ( void )
-{
+static inline void delay (void) {
 	asm volatile(
 		"	mov	__tmp_reg__,%0	\n"
 		"0:	rjmp	1f		\n"
@@ -87,33 +85,28 @@ static	inline	void	delay ( void )
 // ----------------------------------------------------------------------
 // Issue one SPI command.
 // ----------------------------------------------------------------------
-static	void	spi ( byte_t* cmd, byte_t* res, byte_t n )
-{
+static void spi (byte_t* cmd, byte_t* res, byte_t n) {
 	byte_t	c;
 	byte_t	r;
 	byte_t	mask;
 
-	while	( n != 0 )
-	{
+	while (n != 0) {
 		n--;
 		c = *cmd++;
 		r = 0;
-		for	( mask = 0x80; mask; mask >>= 1 )
-		{
-			if	( c & mask )
-			{
-				PORT |= MOSI_MASK;
+		for	(mask = 0x80; mask; mask >>= 1) {
+			if (c & mask) {
+				PORT.OUTSET = MOSI_MASK;
 			}
 			delay();
-			PORT |= SCK_MASK;
+			PORT.OUTSET = SCK_MASK;
 			delay();
 			r <<= 1;
-			if	( PIN & MISO_MASK )
-			{
+			if (PIN & MISO_MASK) {
 				r++;
 			}
-			PORT &= ~ MOSI_MASK;
-			PORT &= ~ SCK_MASK;
+			PORT.OUTCLR = MOSI_MASK;
+			PORT.OUTCLR = SCK_MASK;
 		}
 		*res++ = r;
 	}
@@ -122,127 +115,105 @@ static	void	spi ( byte_t* cmd, byte_t* res, byte_t n )
 // ----------------------------------------------------------------------
 // Create and issue a read or write SPI command.
 // ----------------------------------------------------------------------
-static	void	spi_rw ( void )
-{
+static void spi_rw (void) {
 	uint_t	a;
-
 	a = address++;
-	if	( cmd0 & 0x80 )
-	{	// eeprom
+	if (cmd0 & 0x80) {
+		// eeprom
 		a <<= 1;
 	}
 	cmd[0] = cmd0;
-	if	( a & 1 )
-	{
+	if (a & 1) {
 		cmd[0] |= 0x08;
 	}
 	cmd[1] = a >> 9;
 	cmd[2] = a >> 1;
-	spi( cmd, res, 4 );
+	spi(cmd, res, 4);
 }
 
 // ----------------------------------------------------------------------
 // Handle a non-standard SETUP packet.
 // ----------------------------------------------------------------------
-extern	byte_t	usb_setup ( byte_t data[8] )
-{
+extern byte_t usb_setup (byte_t data[8]) {
 	byte_t	bit;
 	byte_t	mask;
 	byte_t	req;
-
 	// Generic requests
 	req = data[1];
-	if	( req == USBTINY_ECHO )
-	{
+	if (req == USBTINY_ECHO) {
 		return 8;
 	}
-	if	( req == USBTINY_READ )
-	{
-		data[0] = PIN;
+	if (req == USBTINY_READ) {
+		data[0] = PORT.IN;
 		return 1;
 	}
-	if	( req == USBTINY_WRITE )
-	{
-		PORT = data[2];
+	if (req == USBTINY_WRITE) {
+		PORT.OUT = data[2];
 		return 0;
 	}
 	bit = data[2] & 7;
 	mask = 1 << bit;
-	if	( req == USBTINY_CLR )
-	{
-		PORT &= ~ mask;
+	if (req == USBTINY_CLR) {
+		PORT.OUTCLR = mask;
 		return 0;
 	}
-	if	( req == USBTINY_SET )
-	{
-		PORT |= mask;
+	if (req == USBTINY_SET) {
+		PORT.OUTSET = mask;
 		return 0;
 	}
-	if	( req == USBTINY_DDRWRITE )
-	{
-		DDR = data[2];
+	if (req == USBTINY_DDRWRITE) {
+		PORT.DIR = data[2];
 	}
 
 	// Programming requests
-	if	( req == USBTINY_POWERUP )
-	{
+	if (req == USBTINY_POWERUP) {
 		sck_period = data[2];
 		mask = LED_MASK;
-		if	( data[4] )
-		{
+		if	(data[4]) {
 			mask |= RESET_MASK;
 		}
 		CLR(BUFFEN);
-		DDR  = LED_MASK | RESET_MASK | SCK_MASK | MOSI_MASK;
-		PORT = mask;
+		PORT.DIR = LED_MASK | RESET_MASK | SCK_MASK | MOSI_MASK;
+		PORT.OUT = mask;
 		return 0;
 	}
-	if	( req == USBTINY_POWERDOWN )
-	{
-		DDR  = 0x00;
-		PORT = 0x00;
+	if (req == USBTINY_POWERDOWN) {
+		PORT.DIR = 0x00;
+		PORT.OUT = 0x00;
 		SET(BUFFEN);
 		return 0;
 	}
-	if	( ! PORT )
-	{
+	if (!PORT) {
 		return 0;
 	}
-	if	( req == USBTINY_SPI )
-	{
-		spi( data + 2, data + 0, 4 );
+	if (req == USBTINY_SPI) {
+		spi(data + 2, data + 0, 4);
 		return 4;
 	}
-	if	( req == USBTINY_SPI1 )
-	{
-		spi( data + 2, data + 0, 1 );
+	if (req == USBTINY_SPI1) {
+		spi(data + 2, data + 0, 1);
 		return 1;
 	}
-	if	( req == USBTINY_POLL_BYTES )
-	{
+	if (req == USBTINY_POLL_BYTES) {
 		poll1 = data[2];
 		poll2 = data[3];
 		return 0;
 	}
-	address = * (uint_t*) & data[4];
-	if	( req == USBTINY_FLASH_READ )
-	{
+	address = *(uint_t*) &data[4];
+	if (req == USBTINY_FLASH_READ) {
 		cmd0 = 0x20;
 		return 0xff;	// usb_in() will be called to get the data
 	}
-	if	( req == USBTINY_EEPROM_READ )
-	{
+	if (req == USBTINY_EEPROM_READ) {
 		cmd0 = 0xa0;
 		return 0xff;	// usb_in() will be called to get the data
 	}
 	timeout = * (uint_t*) & data[2];
-	if	( req == USBTINY_FLASH_WRITE )
-	{
+	if (req == USBTINY_FLASH_WRITE) {
 		cmd0 = 0x40;
 		return 0;	// data will be received by usb_out()
 	}
-	if	( req == USBTINY_EEPROM_WRITE )
-	{
+	if (req == USBTINY_EEPROM_WRITE) {
 		cmd0 = 0xc0;
 		return 0;	// data will be received by usb_out()
 	}
@@ -252,12 +223,9 @@ extern	byte_t	usb_setup ( byte_t data[8] )
 // ----------------------------------------------------------------------
 // Handle an IN packet.
 // ----------------------------------------------------------------------
-extern	byte_t	usb_in ( byte_t* data, byte_t len )
-{
+extern byte_t usb_in (byte_t* data, byte_t len) {
 	byte_t	i;
-
-	for	( i = 0; i < len; i++ )
-	{
+	for	(i = 0; i < len; i++) {
 		spi_rw();
 		data[i] = res[3];
 	}
@@ -267,23 +235,19 @@ extern	byte_t	usb_in ( byte_t* data, byte_t len )
 // ----------------------------------------------------------------------
 // Handle an OUT packet.
 // ----------------------------------------------------------------------
-extern	void	usb_out ( byte_t* data, byte_t len )
-{
+extern void usb_out (byte_t* data, byte_t len) {
 	byte_t	i;
 	uint_t	usec;
 	byte_t	r;
-
-	for	( i = 0; i < len; i++ )
-	{
+	for (i = 0; i < len; i++) {
 		cmd[3] = data[i];
 		spi_rw();
 		cmd[0] ^= 0x60;	// turn write into read
-		for	( usec = 0; usec < timeout; usec += 32 * sck_period )
-		{	// when timeout > 0, poll until byte is written
-			spi( cmd, res, 4 );
+		for (usec = 0; usec < timeout; usec += 32 * sck_period) {
+			// when timeout > 0, poll until byte is written
+			spi(cmd, res, 4);
 			r = res[3];
-			if	( r == cmd[3] && r != poll1 && r != poll2 )
-			{
+			if (r == cmd[3] && r != poll1 && r != poll2) {
 				break;
 			}
 		}
@@ -293,13 +257,11 @@ extern	void	usb_out ( byte_t* data, byte_t len )
 // ----------------------------------------------------------------------
 // Main
 // ----------------------------------------------------------------------
-extern	int	main ( void )
-{
+extern int main (void) {
 	SET(BUFFEN);
 	OUTPUT(BUFFEN);
 	usb_init();
-	for	( ;; )
-	{
+	while (1) {
 		usb_poll();
 	}
 }
