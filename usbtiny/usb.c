@@ -403,7 +403,6 @@ static	void	usb_transmit ( void )
 extern	void	usb_init ( void )
 {
 	USB_INT_CONFIG |= USB_INT_CONFIG_SET;
-	USB_INT_ENABLE |= (1 << USB_INT_ENABLE_BIT);
 #ifdef	USBTINY_USB_OK_LED
 	OUTPUT(USBTINY_USB_OK_LED);
 #endif

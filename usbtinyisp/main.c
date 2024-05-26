@@ -39,15 +39,15 @@ enum
 // ----------------------------------------------------------------------
 // I/O pins:
 // ----------------------------------------------------------------------
-#define	PORT		PORTB
-#define	DDR		DDRB
-#define	PIN		PINB
+#define	PORT		PORTA.OUT
+#define	DDR		PORTA.DIR
+#define	PIN		PORTA.OUT
 
-#define	LED		PB0		// output
-#define	RESET		PB4		// output
-#define	MOSI		PB5		// output
-#define	MISO		PB6		// input
-#define	SCK		PB7		// output
+#define	LED		PIN1_bp		// output
+#define	RESET		PIN2_bp		// output
+#define	MOSI		PIN5_bp		// output
+#define	MISO		PIN6_bp		// input
+#define	SCK		PIN7_bp		// output
 
 #define	LED_MASK	_BV(LED)
 #define	RESET_MASK	_BV(RESET)
@@ -55,7 +55,7 @@ enum
 #define	MISO_MASK	_BV(MISO)
 #define	SCK_MASK	_BV(SCK)
 
-#define	BUFFEN		(D,4)		// output, active low
+#define	BUFFEN		(A,4)		// output, active low
 
 // ----------------------------------------------------------------------
 // Local data

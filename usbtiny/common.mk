@@ -28,12 +28,12 @@ LDFLAGS	= -g -Wl,--relax,--gc-sections
 MODULES = crc.o int.o usb.o $(OBJECTS)
 UTIL	= $(USBTINY)/../util
 
-main.hex:
+main.elf:
 
-all:		main.hex $(SCHEM)
+all:		main.elf $(SCHEM)
 
 clean:
-	rm -f main.elf *.o tags *.sch~ gschem.log
+	rm -f main.elf main.hex *.o tags *.sch~ gschem.log
 
 clobber:	clean
 	rm -f main.hex $(SCHEM)
@@ -51,7 +51,7 @@ check:		main.elf $(UTIL)/check.py
 disasm:		main.elf
 	avr-objdump -S main.elf
 
-flash:		main.hex
+flash:		main.elf
 	$(FLASH_CMD)
 
 fuses:

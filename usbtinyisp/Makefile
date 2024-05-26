@@ -8,10 +8,10 @@
 # ======================================================================
 
 USBTINY		= ../usbtiny
-TARGET_ARCH	= -mmcu=attiny2313
+TARGET_ARCH	= -mmcu=attiny404
 OBJECTS		= main.o
-FLASH_CMD	= avrdude -pt2313 -U flash:w:main.hex
-FUSES_CMD	= avrdude -pt2313 -U hfuse:w:0xdf:m -U lfuse:w:0xef:m
+FLASH_CMD	= avrdude -pt404 -c serialupdi -P /dev/ttyUSB0 -b 100000 -U flash:w:main.elf:e
+FUSES_CMD	= avrdude -pt404 -c serialupdi -P /dev/ttyUSB0 -b 100000 -U hfuse:w:0xdf:m -U lfuse:w:0xef:m
 STACK		= 32
 FLASH		= 2048
 SRAM		= 128
